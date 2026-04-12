@@ -120,6 +120,9 @@ export default function Layout() {
         <main className="flex-1 overflow-y-auto p-6">
           <Outlet />
         </main>
+        <footer className="px-6 py-3 border-t border-gray-200 dark:border-gray-800 text-center text-xs text-gray-400 dark:text-gray-600">
+          Made by Sheersho
+        </footer>
       </div>
     </div>
   )
