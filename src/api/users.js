@@ -1,7 +1,7 @@
 const BASE = import.meta.env.VITE_API_BASE_URL ?? ''
 
 export async function fetchUsers(adminKey) {
-  const res = await fetch(`${BASE}/api/admin/users`, {
+  const res = await fetch(`${BASE}/admin/users`, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
