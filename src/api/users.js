@@ -1,5 +1,7 @@
+const BASE = import.meta.env.VITE_API_BASE_URL ?? ''
+
 export async function fetchUsers(adminKey) {
-  const res = await fetch('/api/admin/users', {
+  const res = await fetch(`${BASE}/api/admin/users`, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
@@ -9,7 +11,6 @@ export async function fetchUsers(adminKey) {
 
   const text = await res.text()
 
-  // Guard against HTML error pages (e.g. Cloudflare 404/500)
   if (text.trimStart().startsWith('<')) {
     throw new Error(`Server returned an HTML error page (status ${res.status}). The /admin/users endpoint may not exist yet.`)
   }
