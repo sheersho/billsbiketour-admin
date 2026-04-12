@@ -4,7 +4,10 @@ import { RefreshCcw, Mail, CheckCircle, AlertCircle, Send } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useAuth } from '../context/AuthContext'
 
-const API_URL = `${import.meta.env.VITE_API_BASE_URL ?? ''}/admin/renew-access`
+const BASE = import.meta.env.DEV
+  ? ''
+  : 'https://bike-tour-backend.billsbiketour.workers.dev'
+const API_URL = `${BASE}/admin/renew-access`
 
 export default function RenewAccess() {
   const location = useLocation()

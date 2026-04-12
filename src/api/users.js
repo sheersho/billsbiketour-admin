@@ -1,4 +1,6 @@
-const BASE = import.meta.env.VITE_API_BASE_URL ?? ''
+const BASE = import.meta.env.DEV
+  ? ''
+  : 'https://bike-tour-backend.billsbiketour.workers.dev'
 
 export async function fetchUsers(adminKey) {
   const res = await fetch(`${BASE}/admin/users`, {
