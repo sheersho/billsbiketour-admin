@@ -1,5 +1,5 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, Users, RefreshCcw, LogOut, Bike, Menu, Sun, Moon } from 'lucide-react'
+import { LayoutDashboard, Users, RefreshCcw, Flag, LogOut, Bike, Menu, Sun, Moon } from 'lucide-react'
 import { useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
@@ -9,6 +9,7 @@ const navItems = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard', end: true },
   { to: '/users', icon: Users, label: 'Users' },
   { to: '/renew-access', icon: RefreshCcw, label: 'Renew Access' },
+  { to: '/flags', icon: Flag, label: 'Feature Flags' },
 ]
 
 export default function Layout() {

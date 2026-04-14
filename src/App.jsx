@@ -4,6 +4,7 @@ import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
 import Users from './pages/Users'
 import RenewAccess from './pages/RenewAccess'
+import Flags from './pages/Flags'
 import Layout from './components/Layout'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { ThemeProvider, useTheme } from './context/ThemeContext'
@@ -30,6 +31,7 @@ function AppRoutes() {
         <Route index element={<Dashboard />} />
         <Route path="users" element={<Users />} />
         <Route path="renew-access" element={<RenewAccess />} />
+        <Route path="flags" element={<Flags />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
