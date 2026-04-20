@@ -1,7 +1,7 @@
 import { createContext, useContext, useState } from 'react'
 
 const LOGIN_PASSWORD = 'Data@1234'
-const ADMIN_KEY = '8f3c1f4f2f9c7f0d8f6d3c8a4e7b1a2c9d4e6f8a1b3c5d7e9f0a2b4c6d8e1f3'
+const ADMIN_KEY = 'a3a47c8879f69bf0b5b804f964b40acff516fcfe8689633f88f94e3be2b46095'
 const STORAGE_KEY = 'bbt_admin_auth'
 
 const AuthContext = createContext(null)
