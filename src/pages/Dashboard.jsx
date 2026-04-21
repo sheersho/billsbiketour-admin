@@ -25,22 +25,24 @@ function StatCard({ icon: Icon, label, value, color }) {
   )
 }
 
-function ActivityRow({ user }) {
+const statusStyles = {
+  active: 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 ring-1 ring-emerald-500/30',
+  expired: 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 ring-1 ring-amber-500/25',
+  unpaid: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 ring-1 ring-red-500/25',
+}
+
+function ActivityRow({ session: s }) {
   return (
     <div className="flex items-center gap-3 py-3 border-b border-gray-100 dark:border-gray-800 last:border-0">
       <div className="w-8 h-8 rounded-full bg-indigo-600/20 flex items-center justify-center flex-shrink-0 text-indigo-500 dark:text-indigo-400 font-semibold text-xs">
-        {user.email[0].toUpperCase()}
+        {(s.email ?? '?')[0].toUpperCase()}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{user.email}</p>
-        <p className="text-xs text-gray-500">joined {user.created_at.slice(0, 10)}</p>
+        <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{s.email ?? '—'}</p>
+        <p className="text-xs text-gray-500">started {s.created_at.slice(0, 10)}</p>
       </div>
-      <span className={`px-2 py-0.5 rounded-full text-xs font-medium flex-shrink-0 ${
-        user.status === 'active'
-          ? 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 ring-1 ring-emerald-500/30'
-          : 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 ring-1 ring-amber-500/25'
-      }`}>
-        {user.status}
+      <span className={`px-2 py-0.5 rounded-full text-xs font-medium flex-shrink-0 ${statusStyles[s.status] ?? statusStyles.expired}`}>
+        {s.status}
       </span>
     </div>
   )
@@ -48,7 +50,7 @@ function ActivityRow({ user }) {
 
 export default function Dashboard() {
   const { adminKey } = useAuth()
-  const [users, setUsers] = useState([])
+  const [sessions, setSessions] = useState([])
   const [total, setTotal] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -56,16 +58,17 @@ export default function Dashboard() {
   useEffect(() => {
     fetchUsers(adminKey)
       .then(data => {
-        setUsers(data.users)
+        setSessions(data.sessions ?? [])
         setTotal(data.total)
       })
       .catch(e => setError(e.message))
       .finally(() => setLoading(false))
   }, [])
 
-  const activeCount = users.filter(u => u.status === 'active').length
-  const expiredCount = users.filter(u => u.status === 'expired').length
-  const recent = users.slice(0, 6)
+  const activeCount = sessions.filter(s => s.status === 'active').length
+  const expiredCount = sessions.filter(s => s.status === 'expired').length
+  const unpaidCount = sessions.filter(s => s.status === 'unpaid').length
+  const recent = sessions.slice(0, 6)
 
   return (
     <div className="max-w-6xl">
@@ -82,9 +85,9 @@ export default function Dashboard() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-        <StatCard icon={Users} label="Total Users" value={loading ? null : total} color="indigo" />
-        <StatCard icon={UserCheck} label="Active Users" value={loading ? null : activeCount} color="green" />
-        <StatCard icon={Activity} label="Expired" value={loading ? null : expiredCount} color="amber" />
+        <StatCard icon={Users} label="Total Sessions" value={loading ? null : total} color="indigo" />
+        <StatCard icon={UserCheck} label="Active" value={loading ? null : activeCount} color="green" />
+        <StatCard icon={Activity} label="Expired / Unpaid" value={loading ? null : expiredCount + unpaidCount} color="amber" />
       </div>
 
       <div className="grid lg:grid-cols-3 gap-6">
@@ -102,7 +105,7 @@ export default function Dashboard() {
             ) : recent.length === 0 ? (
               <p className="text-gray-400 dark:text-gray-500 text-sm py-4">No users yet</p>
             ) : (
-              recent.map(user => <ActivityRow key={user.email} user={user} />)
+              recent.map(s => <ActivityRow key={s.session_id} session={s} />)
             )}
           </div>
         </div>
@@ -137,12 +140,12 @@ export default function Dashboard() {
             </Link>
           </div>
 
-          {expiredCount > 0 && !loading && (
+          {(expiredCount + unpaidCount) > 0 && !loading && (
             <div className="mt-4 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-500/25 rounded-xl">
               <p className="text-amber-700 dark:text-amber-400 text-sm font-medium">
-                {expiredCount} expired user{expiredCount > 1 ? 's' : ''}
+                {expiredCount + unpaidCount} session{expiredCount + unpaidCount > 1 ? 's' : ''} need attention
               </p>
-              <p className="text-amber-600 dark:text-amber-600 text-xs mt-0.5">Users need access renewal</p>
+              <p className="text-amber-600 dark:text-amber-600 text-xs mt-0.5">{expiredCount} expired · {unpaidCount} unpaid</p>
             </div>
           )}
         </div>
