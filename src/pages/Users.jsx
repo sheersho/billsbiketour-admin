@@ -1,18 +1,37 @@
 import { useState, useEffect } from 'react'
-import { Search, RefreshCcw, UserCheck, UserX, RefreshCw } from 'lucide-react'
+import { Search, RefreshCcw, UserCheck, UserX, RefreshCw, AlertCircle } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { fetchUsers } from '../api/users'
 
-const FILTERS = ['all', 'active', 'expired']
+const FILTERS = ['all', 'active', 'expired', 'unpaid']
 
 function initials(email) {
-  return email[0].toUpperCase()
+  return (email ?? '?')[0].toUpperCase()
+}
+
+function StatusBadge({ status }) {
+  const styles = {
+    active: 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 ring-1 ring-emerald-500/30',
+    expired: 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 ring-1 ring-amber-500/25',
+    unpaid: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 ring-1 ring-red-500/25',
+  }
+  const Icon = status === 'active' ? UserCheck : status === 'unpaid' ? AlertCircle : UserX
+  return (
+    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${styles[status] ?? styles.expired}`}>
+      <Icon className="w-3 h-3" />
+      {status}
+    </span>
+  )
+}
+
+function formatEntry(entry_point) {
+  return entry_point?.replace(/_/g, ' ') ?? '—'
 }
 
 export default function Users() {
   const { adminKey } = useAuth()
-  const [users, setUsers] = useState([])
+  const [sessions, setSessions] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [search, setSearch] = useState('')
@@ -23,7 +42,7 @@ export default function Users() {
     setError(null)
     try {
       const data = await fetchUsers(adminKey)
-      setUsers(data.users)
+      setSessions(data.sessions ?? [])
     } catch (e) {
       setError(e.message)
     } finally {
@@ -33,17 +52,17 @@ export default function Users() {
 
   useEffect(() => { load() }, [])
 
-  const filtered = users.filter(user => {
-    const matchesSearch = user.email.toLowerCase().includes(search.toLowerCase())
-    const matchesFilter = filter === 'all' || user.status === filter
+  const filtered = sessions.filter(s => {
+    const matchesSearch = (s.email ?? '').toLowerCase().includes(search.toLowerCase())
+    const matchesFilter = filter === 'all' || s.status === filter
     return matchesSearch && matchesFilter
   })
 
   return (
     <div className="max-w-6xl">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Users</h1>
-        <p className="text-gray-500 text-sm mt-1">Manage and view all registered users</p>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Sessions</h1>
+        <p className="text-gray-500 text-sm mt-1">Manage and view all ride sessions</p>
       </div>
 
       {/* Filters & search */}
@@ -97,8 +116,10 @@ export default function Users() {
             <thead>
               <tr className="border-b border-gray-100 dark:border-gray-800">
                 <th className="text-left text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider px-5 py-3">User</th>
+                <th className="text-left text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider px-5 py-3">Entry</th>
                 <th className="text-left text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider px-5 py-3">Status</th>
-                <th className="text-left text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider px-5 py-3">Joined</th>
+                <th className="text-left text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider px-5 py-3">Stop</th>
+                <th className="text-left text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider px-5 py-3">Started</th>
                 <th className="text-left text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider px-5 py-3">Expires</th>
                 <th className="text-right text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider px-5 py-3">Actions</th>
               </tr>
@@ -106,49 +127,50 @@ export default function Users() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={5} className="text-center py-12 text-gray-400 dark:text-gray-500 text-sm">
+                  <td colSpan={7} className="text-center py-12 text-gray-400 dark:text-gray-500 text-sm">
                     Loading...
                   </td>
                 </tr>
               ) : filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="text-center py-12 text-gray-400 dark:text-gray-500 text-sm">
-                    No users found
+                  <td colSpan={7} className="text-center py-12 text-gray-400 dark:text-gray-500 text-sm">
+                    No sessions found
                   </td>
                 </tr>
               ) : (
-                filtered.map(user => (
-                  <tr key={user.email} className="border-b border-gray-100 dark:border-gray-800/50 last:border-0 hover:bg-gray-50 dark:hover:bg-gray-800/30 transition">
+                filtered.map(s => (
+                  <tr key={s.session_id} className="border-b border-gray-100 dark:border-gray-800/50 last:border-0 hover:bg-gray-50 dark:hover:bg-gray-800/30 transition">
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-600/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-semibold text-xs flex-shrink-0">
-                          {initials(user.email)}
+                          {initials(s.email)}
                         </div>
-                        <p className="text-sm font-medium text-gray-900 dark:text-white">{user.email}</p>
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">{s.email ?? '—'}</p>
                       </div>
                     </td>
                     <td className="px-5 py-4">
-                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
-                        user.status === 'active'
-                          ? 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 ring-1 ring-emerald-500/30'
-                          : 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 ring-1 ring-amber-500/25'
-                      }`}>
-                        {user.status === 'active'
-                          ? <UserCheck className="w-3 h-3" />
-                          : <UserX className="w-3 h-3" />
-                        }
-                        {user.status}
-                      </span>
+                      <p className="text-sm text-gray-900 dark:text-white capitalize">{formatEntry(s.entry_point)}</p>
+                      <p className="text-xs text-gray-400 dark:text-gray-500">{s.entry_source?.replace(/_/g, ' ')}</p>
                     </td>
-                    <td className="px-5 py-4 text-sm text-gray-500 dark:text-gray-400">{user.created_at.slice(0, 10)}</td>
+                    <td className="px-5 py-4">
+                      <StatusBadge status={s.status} />
+                    </td>
                     <td className="px-5 py-4 text-sm text-gray-500 dark:text-gray-400">
-                      <span>{user.expires_at.slice(0, 10)}</span>
-                      <span className="ml-1.5 text-xs text-gray-400 dark:text-gray-600">{user.expires_at.slice(11, 16)} UTC</span>
+                      {s.current_stop_id ?? '—'}
+                    </td>
+                    <td className="px-5 py-4 text-sm text-gray-500 dark:text-gray-400">{s.created_at.slice(0, 10)}</td>
+                    <td className="px-5 py-4 text-sm text-gray-500 dark:text-gray-400">
+                      {s.unlock_expires_at ? (
+                        <>
+                          <span>{s.unlock_expires_at.slice(0, 10)}</span>
+                          <span className="ml-1.5 text-xs text-gray-400 dark:text-gray-600">{s.unlock_expires_at.slice(11, 16)} UTC</span>
+                        </>
+                      ) : '—'}
                     </td>
                     <td className="px-5 py-4 text-right">
                       <Link
                         to="/renew-access"
-                        state={{ email: user.email }}
+                        state={{ email: s.email }}
                         className="inline-flex items-center gap-1.5 text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 bg-indigo-50 dark:bg-indigo-600/10 hover:bg-indigo-100 dark:hover:bg-indigo-600/20 px-3 py-1.5 rounded-lg transition"
                       >
                         <RefreshCcw className="w-3 h-3" />
@@ -167,33 +189,37 @@ export default function Users() {
           {loading ? (
             <div className="text-center py-12 text-gray-400 dark:text-gray-500 text-sm">Loading...</div>
           ) : filtered.length === 0 ? (
-            <div className="text-center py-12 text-gray-400 dark:text-gray-500 text-sm">No users found</div>
+            <div className="text-center py-12 text-gray-400 dark:text-gray-500 text-sm">No sessions found</div>
           ) : (
-            filtered.map(user => (
-              <div key={user.email} className="p-4">
+            filtered.map(s => (
+              <div key={s.session_id} className="p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3">
                     <div className="w-9 h-9 rounded-full bg-indigo-100 dark:bg-indigo-600/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-semibold text-xs flex-shrink-0">
-                      {initials(user.email)}
+                      {initials(s.email)}
                     </div>
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">{user.email}</p>
+                    <div>
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">{s.email ?? '—'}</p>
+                      <p className="text-xs text-gray-400 dark:text-gray-500 capitalize">{formatEntry(s.entry_point)} · {s.entry_source?.replace(/_/g, ' ')}</p>
+                    </div>
                   </div>
                   <Link
                     to="/renew-access"
-                    state={{ email: user.email }}
+                    state={{ email: s.email }}
                     className="inline-flex items-center gap-1 text-xs text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-600/10 px-2.5 py-1.5 rounded-lg flex-shrink-0"
                   >
                     <RefreshCcw className="w-3 h-3" />
                     Renew
                   </Link>
                 </div>
-                <div className="flex gap-2 mt-3 text-xs">
-                  <span className={`px-2 py-0.5 rounded-full font-medium ${
-                    user.status === 'active'
-                      ? 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400'
-                      : 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400'
-                  }`}>{user.status}</span>
-                  <span className="text-gray-500">expires {user.expires_at.slice(0, 10)} <span className="text-gray-400 dark:text-gray-600">{user.expires_at.slice(11, 16)} UTC</span></span>
+                <div className="flex flex-wrap gap-2 mt-3 text-xs items-center">
+                  <StatusBadge status={s.status} />
+                  {s.current_stop_id != null && (
+                    <span className="text-gray-500">stop {s.current_stop_id}</span>
+                  )}
+                  {s.unlock_expires_at && (
+                    <span className="text-gray-500">expires {s.unlock_expires_at.slice(0, 10)} <span className="text-gray-400 dark:text-gray-600">{s.unlock_expires_at.slice(11, 16)} UTC</span></span>
+                  )}
                 </div>
               </div>
             ))
@@ -202,7 +228,7 @@ export default function Users() {
       </div>
 
       {!loading && (
-        <p className="text-gray-400 dark:text-gray-600 text-xs mt-3">{filtered.length} user{filtered.length !== 1 ? 's' : ''} shown</p>
+        <p className="text-gray-400 dark:text-gray-600 text-xs mt-3">{filtered.length} session{filtered.length !== 1 ? 's' : ''} shown</p>
       )}
     </div>
   )

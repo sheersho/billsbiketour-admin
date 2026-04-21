@@ -28,7 +28,7 @@ export async function fetchUsers(adminKey) {
     throw new Error(data.message ?? data.error ?? `Request failed with status ${res.status}`)
   }
 
-  return data // expects { users: [...], total: number }
+  return data // expects { sessions: [...], total: number }
 }
 
 function parseResponse(text, status) {
